@@ -163,11 +163,12 @@ modules.xml
 
 ### CMake ###
 CMakeLists.txt.user
+CMakeLists.txt
 CMakeCache.txt
 CMakeFiles
 CMakeScripts
 Testing
-Makefile
+# Makefile
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json
