@@ -337,19 +337,21 @@ TREE* build_huffman_tree(
   /* create tree */
   while (h->size > 0) {
 
-    /* TODO: assign two heap elements with smallest symbolcounts to x and y */
+    /* DONE: assign two heap elements with smallest symbolcounts to x and y */
+      x=heap_pop(h);
+      y=heap_pop(h);
 
     if (htree->node_number >= htree->max_nodes) {
       printf("Error in build_huffman_tree: tree structure ran out of memory\n");
       exit(-1);
     }
-    /* TODO: merge two nodes with smallest probability */
+    /* DONE: merge two nodes with smallest probability */
     z.id = id_counter;
     id_counter++;
-    z.value = /* TODO */
+    z.value = x.value+z.value;/* DONE */
     node.id = z.id;
-    node.left = /* TODO */
-    node.right = /* TODO */
+    node.left = &(htree->nodes[x.id]);/* DONE */
+    node.right = &(htree->nodes[y.id]);/* DONE */
     node.parent = 0;
     htree->nodes[z.id]=node;
     htree->nodes[x.id].parent = &(htree->nodes[z.id]);
@@ -404,9 +406,9 @@ void get_codes_from_tree(TREE* htree,         /* Huffman tree */
     }
     while (node.parent!=0) {
       counter++;
-      /* TODO: update code (left children are assigned 1, right children 0) */
+      /* Done: update code (left children are assigned 1, right children 0) */
       if ((((node.parent)->left)->id) == node.id) {
-        codes[symbolmap[i]]+= /* TODO (HINT: use the variable d) */;
+        codes[symbolmap[i]]+=d /* DONE (HINT: use the variable d) */;
         if (debug_file != 0) {
           fprintf(debug_file,"1");
         }
@@ -415,7 +417,7 @@ void get_codes_from_tree(TREE* htree,         /* Huffman tree */
           fprintf(debug_file,"0");
         }
       }
-      d*= /* TODO */;
+      d*= 2/* Done */;
       node = *(node.parent);
     }
     lengths[symbolmap[i]]=counter;
@@ -492,15 +494,20 @@ void encode_huffman(
   }
 
   /* count occurrences of each symbol in the sourceword  */
+  /* Done: count symbols in sourceword, use array "counter" */
+    for (i=0;i<n;i++) {
+        long c=sourceword[i];
+        counter[c]++;
+    }
 
-  /* TODO: count symbols in sourceword, use array "counter" */
-
-  /* build alphabet of occurring symbols */
+    /* build alphabet of occurring symbols */
   symbolcount=0;
   for (i=0;i<s;i++) {
     if (counter[i]>0) {
-      
-      /* TODO: Assign correct values to "symbolmap" and "histogram" */
+      /* DONE: Assign correct values to "symbolmap" and "histogram" */
+        symbolmap[symbolcount]=i;
+        histogram[symbolcount]=counter[i];
+
 
       if (debug_file != 0) {
         fprintf(debug_file,"symbol %ld (pixel value %ld): %ld\n",
@@ -546,7 +553,9 @@ void encode_huffman(
       if (debug_file != 0) {
         fprintf(debug_file,"%ld",bcode%2);
       }
-      /* TODO: write next bit of binary code stored in "bcode". 
+      set_bit(compressed,bcode&1);//%2
+      bcode=bcode>>1;// /2
+      /* Done: write next bit of binary code stored in "bcode".
          Hints:
          You can use set_bit(compressed,x) to write bits to the file (where
          x is either 0 or 1, accordingly). 
