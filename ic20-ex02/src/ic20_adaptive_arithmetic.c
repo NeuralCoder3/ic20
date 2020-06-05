@@ -252,7 +252,7 @@ void encode_adaptive_wnc(
                          where s is the end of file symbol */
   long n,             /* length of sourceword */
   long s,             /* size of source alphabet */
-  double r,           /* rescaling parameter */
+  double r,           /* Correction: readjust parameter */
   long  M,            /* WNC discretisation parameter M */
   FILE* debug_file,   /* 0 - no output, 1 - debug output to file */
   BFILE* compressed)  {/* binary file for compressed bitstring */
@@ -290,32 +290,96 @@ void encode_adaptive_wnc(
   }
 
   /* initialise interval endpoints and underflow counter */
+  k=0;
+  L=0;
+  H=M;
 
   /* insert your code here */
 
   /* encode sourceword */
   for (i=0;i<=n;i++) {
     if (debug_file != 0) {
+      // FixMe invalid read
       fprintf(debug_file,"sourceword[%ld]=%ld\n",i,sourceword[i]);
     }
+    // FixMe invalid read
+    symbol=sourceword[i];
 
     /* underflow expansions/rescaling */
     while (1) {
       /* insert your code here */
+      int changed=0;
+      if(M14<=L && L<M12 && M12<H && H<=M34){
+        // underflow expansion
+        if(debug_file) fprintf(debug_file,"underflow x -> 2*x - %ld\n",M12);
+        L = 2*L-M12;
+        H = 2*H-M12;
+        k++;
+        changed=1;
+      }else if(H <= M12){
+        // rescaling
+        if(debug_file) fprintf(debug_file,"rescaling x -> 2*x, write ");
+        L = 2*L;
+        H = 2*H;
+        set_bit(compressed,0);
+        if (debug_file != 0) fprintf(debug_file,"0");
+        for (j = 0; j < k; j++)
+        {
+          set_bit(compressed,1);
+        if (debug_file != 0) fprintf(debug_file,"1");
+        }
+        if (debug_file != 0) fprintf(debug_file,"\n");
+        k=0;
+        changed=1;
+      }else if(L >= M12){
+        // rescaling
+        if(debug_file) fprintf(debug_file,"rescaling x -> 2*x - %ld, write ",M);
+        L = 2*L-M;
+        H = 2*H-M;
+        set_bit(compressed,1);
+        if (debug_file != 0) fprintf(debug_file,"1");
+        for (j = 0; j < k; j++)
+        {
+          set_bit(compressed,0);
+        if (debug_file != 0) fprintf(debug_file,"0");
+        }
+        if (debug_file != 0) fprintf(debug_file,"\n");
+        k=0;
+        changed=1;
+      }
 
-      if (debug_file != 0) {
+      if (debug_file != 0 && !changed) {
         fprintf(debug_file,"k: %ld, [%ld, %ld)\n",k,L,H);
       }
-      break;
+      if(!changed)
+        break;
     }
 
     /* readjustment */
 
     /* insert your code here */
+    if(C>M14+2){
+      if (debug_file != 0) {
+        fprintf(debug_file,"Readjust\n");
+      }
+      // alternative: all 1
+      C=0;
+      for (j=0;j<s;j++) {
+        counter[j]=max(1,(long)(counter[j]*r));
+        C+=counter[j];
+      }
+    }
 
     /* encode symbol */
     if (i<=n-1) {
       /* insert your code here */
+      oldL=L;
+      csum=0;
+      for (j = 0; j < symbol; j++)
+        csum+=counter[j];
+
+      L=oldL+floor((H-oldL)*csum/C);
+      H=oldL+floor((H-oldL)*(csum+counter[symbol])/C);
 
       if (debug_file != 0) {
         fprintf(debug_file,"new [L,H) = [%ld,%ld)\n",L,H);
@@ -328,19 +392,39 @@ void encode_adaptive_wnc(
       }
 
       /* insert your code here */
+      if(L<M14){
+        set_bit(compressed,0);
+        if (debug_file != 0) fprintf(debug_file,"0");
+        for (j = 0; j < k+1; j++)
+        {
+          set_bit(compressed,1);
+        if (debug_file != 0) fprintf(debug_file,"1");
+        }
+      }else{
+        set_bit(compressed,1);
+        if (debug_file != 0) fprintf(debug_file,"1");
+        for (j = 0; j < k+1; j++)
+        {
+          set_bit(compressed,0);
+        if (debug_file != 0) fprintf(debug_file,"0");
+        }
+      }
+      if (debug_file != 0) fprintf(debug_file,"\n");
+
     }
   }
+      if (debug_file != 0) fprintf(debug_file,"\n");
 }
 
 
 /*--------------------------------------------------------------------------*/
 
-/* apply WNC algorithm for adaptive arithmetic integer encoding */
+/* apply WNC algorithm for adaptive arithmetic integer Correction: decode */
 void decode_adaptive_wnc(
     BFILE* compressed,  /* binary file with compressed bitstring */
     long n,             /* length of sourceword */
     long s,             /* size of source alphabet */
-    double r,           /* rescaling parameter */
+    double r,           /* Correction: readjust parameter */
     long  M,            /* WNC discretisation parameter M */
     FILE* debug_file,   /* 0 - no output, 1 - debug output to file */
     long* sourceword)  {/* array containing n numbers from {0,...,s}
@@ -378,12 +462,17 @@ void decode_adaptive_wnc(
   }
 
   /* initialise interval endpoints*/
-
   /* insert your code here */
+  L=0;
+  H=M;
+  N=ceil(log2(M));
 
-  /* read first bits of codeword to obtain initival v */
-
+  /* read first bits of codeword to obtain Correction: initial v */
   /* insert your code here */
+  v=0;
+  // more elegant than get_bits
+  for (i = 0; i < N; i++)
+    v=(v<<1)|bfgetb(compressed);
 
   if (debug_file != 0) {
     fprintf(debug_file,"initial v: %ld (%ld first bits from coded file)\n",
@@ -395,22 +484,73 @@ void decode_adaptive_wnc(
 
     /* underflow expansions/rescaling */
     while (1) {
-
       /* insert your code here */
+      int changed=0;
+      if(M14<=L && L<M12 && M12<H && H<=M34){
+        // underflow expansion
+        if(debug_file) fprintf(debug_file,"underflow: x-> 2*x-%ld ",M12);
+        L = 2*L-M12;
+        H = 2*H-M12;
+        v = 2*v-M12;
+        changed=1;
+      }else if(H <= M12){
+        // rescaling
+        if(debug_file) fprintf(debug_file,"rescaling: x-> 2*x ");
+        L = 2*L;
+        H = 2*H;
+        v = 2*v;
+        changed=1;
+      }else if(L >= M12){
+        // rescaling
+        if(debug_file) fprintf(debug_file,"rescaling: x-> 2*x-%ld ",M);
+        L = 2*L-M;
+        H = 2*H-M;
+        v = 2*v-M;
+        changed=1;
+      }
 
-      if (debug_file != 0) {
+      if(changed){
+        b=get_bit(compressed);
+        if(b>=0)
+          v=v+b;
+        if(debug_file) fprintf(debug_file,"[%ld, %ld), b %ld, v %ld\n",L,H,b,v);
+      }
+
+      if (debug_file != 0 && !changed) {
         fprintf(debug_file,"v: %ld, [%ld, %ld)\n",v,L,H);
       }
-      break;
+      if(!changed)
+        break;
     }
 
-    /* readjustment */
 
+    /* readjustment */
     /* insert your code here */
+    if(C>M14+2){
+      if (debug_file != 0) {
+        fprintf(debug_file,"Readjust\n");
+      }
+      // alternative: all 1
+      C=0;
+      for (j=0;j<s;j++) {
+        counter[j]=max(1,(long)(counter[j]*r));
+        C+=counter[j];
+      }
+    }
+
 
     /* decode symbol */
-
     /* insert your code here */
+    w = floor(((v-L+1)*C-1)/(H-L));
+    csum=0;
+    symbol=0;
+    while(!(csum <= w && w<csum+counter[symbol])){
+      csum+=counter[symbol];
+      symbol++;
+    }
+    oldL=L;
+    L=oldL+floor((H-oldL)*csum/C);
+    H=oldL+floor((H-oldL)*(csum+counter[symbol])/C);
 
     if (debug_file != 0) {
       fprintf(debug_file,"[c_i-1,c_i) = [%ld %ld) ",csum,csum+counter[symbol]);
@@ -419,8 +559,9 @@ void decode_adaptive_wnc(
     }
 
     /* update counters */
-
     /* insert your code here */
+    counter[symbol]++;
+    C++;
   }
 }
 
@@ -573,7 +714,7 @@ int main (int argc, char **args)
     /* allocate memory */
     alloc_image(&image,nx,ny);
 
-    alloc_long_vector(&sourceword,nc*nx*ny);
+    alloc_long_vector(&sourceword,nc*nx*ny); // FixMe: Memory Leak
     convert_image_to_vector(image.orig_rgb,1,1,nx,ny,nc,sourceword);
 
     /* compress with WNC */
@@ -583,14 +724,14 @@ int main (int argc, char **args)
     if (debug_file != 0) {
       dfile = fopen(debug_file,"w");
     }
-    encode_adaptive_wnc(sourceword,nx*ny*nc,s,r,M,dfile,binary_file);
+    encode_adaptive_wnc(sourceword,nx*ny*nc,s,r,M,dfile,binary_file); // FixMe: Memory Leak
     bfclose(binary_file);
     printf("Resulting compression ratio: %f:1\n",
            get_compression_ratio(input_file,tmp_file));
 
     binary_file = bfopen(tmp_file,"r");
     printf("Decompressing with WNC (M=%ld, r=%f)\n",M,r);
-    decode_adaptive_wnc(binary_file,nx*ny*nc,s,r,M,dfile,sourceword);
+    decode_adaptive_wnc(binary_file,nx*ny*nc,s,r,M,dfile,sourceword); // FixMe: Memory Leak
     convert_vector_to_image(sourceword,1,1,nx,ny,nc,image.orig_rgb);
     bfclose(binary_file);
     if (debug_file !=0) {
