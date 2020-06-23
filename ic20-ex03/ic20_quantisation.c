@@ -698,7 +698,7 @@ void prepare_uniform_maps(long n, /* number of quantised values */
      associated interval identifer */
   for (i = 0; i < max_q; i++) {
     /* TODO: set quantisation map small */
-    quantisation_map_small[i] = i/delta;
+    quantisation_map_small[i] = (int)(i/delta);
     /*printf("%ld -> %ld\n",i,quantisation_map_small[i]);*/
   }
   /* TODO: special case for last value */
@@ -709,7 +709,7 @@ void prepare_uniform_maps(long n, /* number of quantised values */
      corresponding grey value */
   for (i = 0; i < n; i++) {
     /* TODO: set quantisation map back */
-    quantisation_map_back[i] = ((float)i+0.5)*delta;
+    quantisation_map_back[i] = (int)(((float)i+0.5)*delta);
     /*printf("%ld -> %ld\n",i,quantisation_map_back[i]);*/
   }
 
@@ -744,6 +744,7 @@ void quantise_image_scalar(float*** original,
         }
         /* TODO: set quantised image value */
         quantised[c][x][y] = quantisation_map_small[(int)(original[c][x][y])];
+        quantised[c][x][y] = quantisation_map_back[(int)(quantised[c][x][y])];
       }
 }
 
