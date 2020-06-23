@@ -702,7 +702,7 @@ void prepare_uniform_maps(long n, /* number of quantised values */
     /*printf("%ld -> %ld\n",i,quantisation_map_small[i]);*/
   }
   /* TODO: special case for last value */
-  quantisation_map_small[max_q] =
+  quantisation_map_small[max_q] = n;
   /*  printf("%ld -> %ld\n",max_q,quantisation_map_small[max_q]); */
 
   /* quantisation_map_back should map the interval identifier i to the
@@ -743,7 +743,7 @@ void quantise_image_scalar(float*** original,
           original[c][x][y]=0;
         }
         /* TODO: set quantised image value */
-        quantised[c][x][y] = 
+        quantised[c][x][y] = quantisation_map_small[(int)(original[c][x][y])];
       }
 }
 
@@ -793,7 +793,11 @@ long find_closest_cluster(RGB colour, RGB* centres, long cluster_count) {
   for (i=0; i<cluster_count; i++) {
     /* TODO: find closest cluster centre and store it in min_index.
        Hint: You may use the function compute_distance */
-
+    distance=compute_distance(colour,centres[i]);
+    if(distance<min_distance){
+      min_distance=distance;
+      min_index=i;
+    }
   }
   return min_index;
 }
@@ -855,7 +859,7 @@ void quantise_image_kmeans(float*** original,
   }
 
   /* allocate memory for centres */
-  alloc_vector_rgb(&centres,colour_count);
+  alloc_vector_rgb(&centres,colour_count); // Maybe only n and not colour_count?
   
   /* intialise q cluster centres randomly */
   srand ((unsigned int) SEED);
@@ -863,9 +867,9 @@ void quantise_image_kmeans(float*** original,
     /* TODO: create random variable in the range [0,255]
        Hint: Have a look how the function rand() works.
     */
-    centres[i].r = 
-    centres[i].g = 
-    centres[i].b = 
+    centres[i].r = rand()%256;
+    centres[i].g = rand()%256;
+    centres[i].b = rand()%256;
     /*printf("centre %ld: (%f, %f, %f)\n",i,centres[i].r,centres[i].g,centres[i].b);*/
   }
 
@@ -884,6 +888,11 @@ void quantise_image_kmeans(float*** original,
     /* Hint: Use the function find_closest_cluster and the variables
        quantisation_map and changes */ 
     for (i=0; i<colour_count; i++) {
+      long new_centre=find_closest_cluster(colours[i],centres,n);
+      if(new_centre!=quantisation_map[i]){
+        quantisation_map[i]=new_centre;
+        changes++;
+      }
       /*
       printf("(%f %f %f) closest cluster: %ld, former mapping %ld\n",
              colours[i].r,colours[i].g,colours[i].b,c,quantisation_map[i]);
@@ -898,14 +907,17 @@ void quantise_image_kmeans(float*** original,
         if (quantisation_map[j] == i) {
           /* printf("%ld: qmap %ld, (%f, %f, %f)\n",i,j,colours[i].r,
              colours[i].g,colours[i].b);*/
+          sum.r+=colours[j].r;
+          sum.g+=colours[j].g;
+          sum.b+=colours[j].b;
           count++;
         }
       }
       /* TODO: compute new mean taking account number of points in cluster */
       if (count > 0) {
-        centres[i].r = ;
-        centres[i].g = ;
-        centres[i].b = ;
+        centres[i].r = sum.r/count;
+        centres[i].g = sum.g/count;
+        centres[i].b = sum.b/count;
       }
       /* printf("centre %ld: (%f, %f, %f)\n",
          i,centres[i].r,centres[i].g,centres[i].b); */
@@ -930,6 +942,18 @@ void quantise_image_kmeans(float*** original,
          0 ~ R, 1 ~ G, 2 ~ B. You can use the variable cindex to recover
          the correct cluster index from the index_map array (See beginning
          of this function). */
+        cindex=index_map
+          [(int)(original[0][i][j])]
+          [(int)(original[1][i][j])]
+          [(int)(original[2][i][j])];
+        // for (size_t c = 0; c < 3; c++)
+        // {
+          cindex=quantisation_map[cindex];
+        // }
+        
+         quantised[0][i][j]=centres[cindex].r;
+         quantised[1][i][j]=centres[cindex].g;
+         quantised[2][i][j]=centres[cindex].b;
       /*
       printf("%ld -> %ld -> (%ld %ld %ld)\n",cindex,
              quantisation_map[cindex],
