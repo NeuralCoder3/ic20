@@ -740,6 +740,7 @@ long w[8][8]= {{10,15,25,37,51,66,82,100},
 
 /*--------------------------------------------------------------------------*/
 /* calulates block DCT of input image/channel */
+// This is from lecture 8 not 11
 void block_DCT(long  **f,            /* input image */
                long nx, long ny,     /* image dimensions */
                long N,               /* block size */
@@ -792,6 +793,15 @@ void block_DCT(long  **f,            /* input image */
          each block has full size NxN, the image is extended appropriately
          elsewhere. Make use of the predefined cosine-basis and scaling
          functions. */
+      for(u=0;u<N;u++)
+        for(v=0;v<N;v++) {
+          double sum=0;
+          for(x=0;x<N;x++)
+            for(y=0;y<N;y++) {
+              sum+=(double)(f[ox+x][oy+y])*basis[u][x]*basis[v][y];
+            }
+          dct[ox+u][oy+v]=alpha[u]*alpha[v]*sum;
+        }
     }
  
   /* ---- free memory ---- */
@@ -1310,14 +1320,14 @@ void subsample(long **f, /* input: fine resolution */
     for (l=0;l<ny_coarse;l++) {
       ox = k*factor+1; oy=l*factor+1; 
       sum=0; counter=0;
-      for (u=0; u<factor; u++)
+      for (u=0; u<factor; u++) //maybe nicer style: u=ox;u<factor+ox;u++
         for (v=0; v<factor; v++) {
           if ((u+ox <= nx) && (v+oy <=ny)) {
-            sum+=/* supplement code here */
+            sum+=f[u+ox][v+oy];/* supplement code here */
             counter++;
           }
         }
-      g[k+1][l+1]=/*supplement code here */
+      g[k+1][l+1]=sum/counter;/*supplement code here */
     }
 }
 
@@ -1340,11 +1350,12 @@ void upsample(long **f, /* input: coarse resolution */
      resolution pixel and average */
   for (k=0;k<nx_coarse;k++)
     for (l=0;l<ny_coarse;l++) {
+      long value=f[k][l];
       ox = k*factor+1; oy=l*factor+1;
       for (u=0; u<factor; u++)
         for (v=0; v<factor; v++) {
           if (u+ox <= nx && v+oy <=ny) {
-            g[u+ox][v+oy]=/* supplement code here */
+            g[u+ox][v+oy]=value;/* supplement code here */
           }
         }
     }
