@@ -1204,14 +1204,15 @@ void block_encode(long  **quant,      /* input quantised DCT coefficients */
 
       /* encode DC coefficient of current block */
       pred_error = quant[ox][oy]-last_dc;
-      cat = /* supplement your code here */
+      cat = category_lookup[abs(pred_error)];/* supplement your code here */
             /* HINT: the array category_lookup has been initialised with
                init_category_table to assist you. Find out what it does
                and use it here. */
       if (pred_error > 0) {
-        c = /* supplement your code here */
+        c = pred_error;/* supplement your code here */
       } else {
-        c = /* supplement your code here */
+        c = (1<<cat)-1+pred_error;/* supplement your code here */
+        //2^n = pow(2,n) = 1<<n
       }
 
       /* store DC representation into cache */
@@ -1250,12 +1251,12 @@ void block_encode(long  **quant,      /* input quantised DCT coefficients */
 
           /* handle run lengths > 15 */
           while (runlength > 15) {
-            cache_sym[symbols]=/* supplement your code here */
+            cache_sym[symbols]=ZRL;/* supplement your code here */
             cache_c[symbols]=-1;
             symbols++;
-            runlength=/* supplement your code here */
+            runlength-=16;/* supplement your code here */ // TODO: -=16 or -=15
             if (debug_file != 0) {
-            fprintf(debug_file,"ZRL ");
+              fprintf(debug_file,"ZRL ");
             }
           }
           
