@@ -1071,13 +1071,41 @@ void init_zigzag_table(long* zigzag_x, long* zigzag_y) {
   j=0;
   zigzag_x[0]=0;
   zigzag_y[0]=0;
-  while (i!=7 || j!=7) {
+  long N=8;
+  while (i!=N-1 || j!=N-1) {
     /* supplement your code here */
     /* HINT: set i and j to the next coordinate in the zig zag pattern.
        You can use case distinctions to do that. */ 
-    c++;
-    zigzag_x[c]=i;
-    zigzag_y[c]=j;
+    //right up
+    while(j>0 && i<N-1) {
+      c++;
+      i++;
+      j--;
+      zigzag_x[c]=i;
+      zigzag_y[c]=j;
+    }
+    //right
+    if(i<N-1){
+      c++;
+      i++;
+      zigzag_x[c]=i;
+      zigzag_y[c]=j;
+    }
+    //left down
+    while(j<N-1 && i>0) {
+      c++;
+      i--;
+      j++;
+      zigzag_x[c]=i;
+      zigzag_y[c]=j;
+    }
+    //right
+    if(i<N-1){
+      c++;
+      i++;
+      zigzag_x[c]=i;
+      zigzag_y[c]=j;
+    }
   }
   return;
 }
