@@ -1379,7 +1379,7 @@ void upsample(long **f, /* input: coarse resolution */
      resolution pixel and average */
   for (k=0;k<nx_coarse;k++)
     for (l=0;l<ny_coarse;l++) {
-      long value=f[k][l];
+      long value=f[k+1][l+1];
       ox = k*factor+1; oy=l*factor+1;
       for (u=0; u<factor; u++)
         for (v=0; v<factor; v++) {
