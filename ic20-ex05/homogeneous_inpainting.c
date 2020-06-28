@@ -322,9 +322,11 @@ void inpaint
       {
         if(mask[i-1][j-1]<0.5)
           u[i][j]=
-            ht*rx*tmp[i+1][j]+ht*rx*tmp[i-1][j]+
+            ht*rx*tmp[i+1][j]+
+            ht*rx*tmp[i-1][j]+
             (1.0-2*ht*rx-2*ht*ry)*tmp[i][j] +
-            ht*ry*tmp[i][j+1] + ht*ry*u[i][j-1];
+            ht*ry*tmp[i][j+1] + 
+            ht*ry*tmp[i][j-1];
       }
     }
 

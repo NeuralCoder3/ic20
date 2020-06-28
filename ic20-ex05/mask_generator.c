@@ -346,9 +346,12 @@ long dithering(float** mask,          /* mask (output) */
   for (j=by; j<ny+by; j++)
     for (i=bx; i<nx+bx; i++) {
       laplace[i][j]=
-      sqrt(
-        pow((u[i+1][j]-2*u[i][j]+u[i-1][j])*rx,2) +
-        pow((u[i][j+1]-2*u[i][j]+u[i][j-1])*ry,2));
+      abs(
+        (u[i+1][j]-2*u[i][j]+u[i-1][j])*rx+
+        (u[i][j+1]-2*u[i][j]+u[i][j-1])*ry);
+      // sqrt(
+      //   pow((u[i+1][j]-2*u[i][j]+u[i-1][j])*rx,2) +
+      //   pow((u[i][j+1]-2*u[i][j]+u[i][j-1])*ry,2));
        /* TODO */
       avg_laplace+=laplace[i][j];
       if (laplace[i][j] > max_laplace) {
