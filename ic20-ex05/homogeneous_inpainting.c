@@ -277,22 +277,26 @@ void inpaint
      of known data everywhere else */
 
   /* TODO */
+  long count=0;
   for (size_t j = 0; j < ny; j++)
   {
     for (size_t i = 0; i < nx; i++)
     {
-      avg+=f[i][j];
+      if(mask[i][j]>=0.5){
+        avg+=f[i][j];
+        count++;
+      }
     }
   }
-  avg/=nx*ny;
-  for (size_t j = 0; j < ny; j++)
+  avg/=count;
+  for (size_t j = 0; j <= ny; j++)
   {
-    for (size_t i = 0; i < nx; i++)
+    for (size_t i = 0; i <= nx; i++)
     {
       if(mask[i][j]>=0.5)
-        u[i+1][j+1]=f[i][j];
+        u[i][j]=f[i][j];
       else
-        u[i+1][j+1]=avg;
+        u[i][j]=avg;
     }
   }
   
@@ -320,7 +324,7 @@ void inpaint
     {
       for (size_t i = 1; i <= nx; i++)
       {
-        if(mask[i-1][j-1]<0.5)
+        if(mask[i][j]<0.5)
           u[i][j]=
             ht*rx*tmp[i+1][j]+
             ht*rx*tmp[i-1][j]+
